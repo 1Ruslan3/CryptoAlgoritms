@@ -1,7 +1,8 @@
 namespace DesAlgoritm
 {
-    public interface IExpandKey
+    public interface IKeyExpansion
     {
         byte[][] ExpandKey(byte[] key);
     }
+
 }

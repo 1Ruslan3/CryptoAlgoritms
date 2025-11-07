@@ -1,10 +1,11 @@
 namespace DesAlgoritm
 {
-    public interface ISymmetricBlockCipher
+ public interface ISymmetricBlockCipher
     {
+        void Initialize(byte[] key);
         byte[] Encrypt(byte[] inputBlock);
-
         byte[] Decrypt(byte[] inputBlock);
-
+        void Reset();
+        bool IsInitialized { get; }
     }
 }
