@@ -1,195 +1,279 @@
 namespace DesAlgoritm
 {
-    public enum CipherMode
+    public class BlockCipher
     {
-        ECB,
-        CBC
-    }
-
-    public enum PaddingMode
-    {
-        None,
-        ZeroPadding,
-        PKCS7
-    }
-
-    public class BlockCipher : IDisposable
-    {
+        #region Fields
         private readonly ISymmetricBlockCipher _cipher;
         private readonly int _blockSize;
         private readonly CipherMode _mode;
         private readonly PaddingMode _padding;
-        private byte[]? _iv;
-        private bool _disposed;
+        private readonly byte[] _key;
+        private readonly byte[] _iv;
 
+        #endregion
+      
+        #region Constructor
         public BlockCipher(
-            int blockSizeBytes,
+            int blockSize,
             byte[] key,
             CipherMode mode,
             PaddingMode padding,
-            byte[]? iv,
+            byte[] iv,
             ISymmetricBlockCipher algorithm)
         {
-            if (blockSizeBytes <= 0)
-                throw new ArgumentException("Block size must be positive.");
             if (algorithm == null)
                 throw new ArgumentNullException(nameof(algorithm));
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
+            if (blockSize <= 0)
+                throw new ArgumentException("Block size must be positive.", nameof(blockSize));
 
-            _blockSize = blockSizeBytes;
-            _cipher = algorithm;
+            _blockSize = blockSize;
             _mode = mode;
             _padding = padding;
-
-            if (mode == CipherMode.CBC)
-            {
-                if (iv == null || iv.Length != _blockSize)
-                    throw new ArgumentException($"IV must be {_blockSize} bytes for CBC mode.");
-                _iv = (byte[])iv.Clone();
-            }
-
-            _cipher.Initialize(key);
+            _key = key;
+            _iv = iv ?? new byte[_blockSize];
+            _cipher = algorithm;
+            _cipher.Initialize(_key);
         }
 
-        public byte[] Encrypt(byte[] plainData)
+        #endregion
+
+        #region Encrypt/Decrypt
+        public byte[] Encrypt(byte[] data)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(BlockCipher));
-            if (plainData == null) throw new ArgumentNullException(nameof(plainData));
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
 
-            byte[] padded = ApplyPadding(plainData);
-            List<byte> result = new List<byte>();
-            byte[] prevBlock = _mode == CipherMode.CBC && _iv != null ? (byte[])_iv.Clone() : new byte[_blockSize];
+            byte[] padded = ApplyPadding(data);
+            byte[] output = new byte[padded.Length];
 
-            for (int i = 0; i < padded.Length; i += _blockSize)
+            byte[] prevBlock = new byte[_blockSize];
+            Buffer.BlockCopy(_iv, 0, prevBlock, 0, _blockSize);
+
+            byte[] counter = new byte[_blockSize];
+            Buffer.BlockCopy(_iv, 0, counter, 0, _blockSize);
+
+            for (int offset = 0; offset < padded.Length; offset += _blockSize)
             {
                 byte[] block = new byte[_blockSize];
-                Array.Copy(padded, i, block, 0, _blockSize);
+                Buffer.BlockCopy(padded, offset, block, 0, _blockSize);
+                byte[] encryptedBlock;
 
-                if (_mode == CipherMode.CBC)
-                    XorBlocks(block, prevBlock);
+                switch (_mode)
+                {
+                    case CipherMode.ECB:
+                        encryptedBlock = _cipher.Encrypt(block);
+                        break;
 
-                byte[] encrypted = _cipher.Encrypt(block);
+                    case CipherMode.CBC:
+                        Xor(block, prevBlock);
+                        encryptedBlock = _cipher.Encrypt(block);
+                        Buffer.BlockCopy(encryptedBlock, 0, prevBlock, 0, _blockSize);
+                        break;
 
-                if (_mode == CipherMode.CBC)
-                    Array.Copy(encrypted, prevBlock, _blockSize);
+                    case CipherMode.PCBC:
+                        Xor(block, prevBlock);
+                        encryptedBlock = _cipher.Encrypt(block);
+                        byte[] temp = new byte[_blockSize];
+                        Buffer.BlockCopy(block, 0, temp, 0, _blockSize);
+                        Xor(temp, encryptedBlock);
+                        Buffer.BlockCopy(temp, 0, prevBlock, 0, _blockSize);
+                        break;
 
-                result.AddRange(encrypted);
+                    case CipherMode.CFB:
+                        byte[] feedback = _cipher.Encrypt(prevBlock);
+                        Xor(block, feedback);
+                        encryptedBlock = block;
+                        Buffer.BlockCopy(encryptedBlock, 0, prevBlock, 0, _blockSize);
+                        break;
+
+                    case CipherMode.OFB:
+                        byte[] ofbFeedback = _cipher.Encrypt(prevBlock);
+                        Buffer.BlockCopy(ofbFeedback, 0, prevBlock, 0, _blockSize);
+                        encryptedBlock = new byte[_blockSize];
+                        Buffer.BlockCopy(block, 0, encryptedBlock, 0, _blockSize);
+                        Xor(encryptedBlock, ofbFeedback);
+                        break;
+
+                    case CipherMode.CTR:
+                        byte[] ctrEnc = _cipher.Encrypt(counter);
+                        IncrementCounter(counter);
+                        encryptedBlock = new byte[_blockSize];
+                        Buffer.BlockCopy(block, 0, encryptedBlock, 0, _blockSize);
+                        Xor(encryptedBlock, ctrEnc);
+                        break;
+
+                    default:
+                        throw new NotSupportedException($"Mode {_mode} not supported.");
+                }
+
+                Buffer.BlockCopy(encryptedBlock, 0, output, offset, _blockSize);
             }
 
-            return result.ToArray();
+            return output;
         }
 
-        public byte[] Decrypt(byte[] cipherData)
+        public byte[] Decrypt(byte[] data)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(BlockCipher));
-            if (cipherData == null) throw new ArgumentNullException(nameof(cipherData));
-            if (cipherData.Length % _blockSize != 0)
-                throw new ArgumentException("Ciphertext length must be multiple of block size.");
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+            if (data.Length % _blockSize != 0)
+                throw new ArgumentException("Invalid data length (not a multiple of block size).");
 
-            List<byte> result = new List<byte>();
-            byte[] prevBlock = _mode == CipherMode.CBC && _iv != null ? (byte[])_iv.Clone() : new byte[_blockSize];
+            byte[] output = new byte[data.Length];
 
-            for (int i = 0; i < cipherData.Length; i += _blockSize)
+            byte[] prevBlock = new byte[_blockSize];
+            Buffer.BlockCopy(_iv, 0, prevBlock, 0, _blockSize);
+
+            byte[] counter = new byte[_blockSize];
+            Buffer.BlockCopy(_iv, 0, counter, 0, _blockSize);
+
+            for (int offset = 0; offset < data.Length; offset += _blockSize)
             {
                 byte[] block = new byte[_blockSize];
-                Array.Copy(cipherData, i, block, 0, _blockSize);
+                Buffer.BlockCopy(data, offset, block, 0, _blockSize);
+                byte[] decryptedBlock;
 
-                byte[] decrypted = _cipher.Decrypt(block);
+                switch (_mode)
+                {
+                    case CipherMode.ECB:
+                        decryptedBlock = _cipher.Decrypt(block);
+                        break;
 
-                if (_mode == CipherMode.CBC)
-                    XorBlocks(decrypted, prevBlock);
+                    case CipherMode.CBC:
+                        decryptedBlock = _cipher.Decrypt(block);
+                        Xor(decryptedBlock, prevBlock);
+                        Buffer.BlockCopy(block, 0, prevBlock, 0, _blockSize);
+                        break;
 
-                result.AddRange(decrypted);
+                    case CipherMode.PCBC:
+                        decryptedBlock = _cipher.Decrypt(block);
+                        byte[] temp = new byte[_blockSize];
+                        Buffer.BlockCopy(decryptedBlock, 0, temp, 0, _blockSize);
+                        Xor(decryptedBlock, prevBlock);
+                        Xor(temp, block);
+                        Buffer.BlockCopy(temp, 0, prevBlock, 0, _blockSize);
+                        break;
 
-                if (_mode == CipherMode.CBC)
-                    Array.Copy(block, prevBlock, _blockSize);
+                    case CipherMode.CFB:
+                        byte[] feedback = _cipher.Encrypt(prevBlock);
+                        decryptedBlock = new byte[_blockSize];
+                        Buffer.BlockCopy(block, 0, decryptedBlock, 0, _blockSize);
+                        Xor(decryptedBlock, feedback);
+                        Buffer.BlockCopy(block, 0, prevBlock, 0, _blockSize);
+                        break;
+
+                    case CipherMode.OFB:
+                        byte[] ofbFeedback = _cipher.Encrypt(prevBlock);
+                        Buffer.BlockCopy(ofbFeedback, 0, prevBlock, 0, _blockSize);
+                        decryptedBlock = new byte[_blockSize];
+                        Buffer.BlockCopy(block, 0, decryptedBlock, 0, _blockSize);
+                        Xor(decryptedBlock, ofbFeedback);
+                        break;
+
+                    case CipherMode.CTR:
+                        byte[] ctrEnc = _cipher.Encrypt(counter);
+                        IncrementCounter(counter);
+                        decryptedBlock = new byte[_blockSize];
+                        Buffer.BlockCopy(block, 0, decryptedBlock, 0, _blockSize);
+                        Xor(decryptedBlock, ctrEnc);
+                        break;
+
+                    default:
+                        throw new NotSupportedException($"Mode {_mode} not supported.");
+                }
+
+                Buffer.BlockCopy(decryptedBlock, 0, output, offset, _blockSize);
             }
 
-            return RemovePadding(result.ToArray());
+            return RemovePadding(output);
         }
 
-        private void XorBlocks(byte[] a, byte[] b)
+        #endregion
+
+        #region Helper's methods
+        private byte[] ApplyPadding(byte[] data)
+        {
+            if (_padding == PaddingMode.None)
+            {
+                if (data.Length % _blockSize != 0)
+                    throw new ArgumentException("Data length not multiple of block size in None mode.");
+                return data;
+            }
+
+            int padLen = _blockSize - (data.Length % _blockSize);
+            if (padLen == 0)
+                padLen = _blockSize;
+
+            byte[] padded = new byte[data.Length + padLen];
+            Buffer.BlockCopy(data, 0, padded, 0, data.Length);
+
+            switch (_padding)
+            {
+                case PaddingMode.ZeroPadding:
+                    break;
+
+                case PaddingMode.PKCS7:
+                    for (int i = data.Length; i < padded.Length; i++)
+                        padded[i] = (byte)padLen;
+                    break;
+
+                case PaddingMode.ANSI_X923:
+                    for (int i = data.Length; i < padded.Length - 1; i++)
+                        padded[i] = 0x00;
+                    padded[padded.Length - 1] = (byte)padLen;
+                    break;
+
+                case PaddingMode.ISO_10126:
+                    Random rnd = new Random();
+                    for (int i = data.Length; i < padded.Length - 1; i++)
+                        padded[i] = (byte)rnd.Next(0, 256);
+                    padded[padded.Length - 1] = (byte)padLen;
+                    break;
+            }
+
+            return padded;
+        }
+
+        private byte[] RemovePadding(byte[] data)
+        {
+            if (_padding == PaddingMode.None || _padding == PaddingMode.ZeroPadding)
+                return data;
+
+            byte padLen = data[data.Length - 1];
+            if (padLen <= 0 || padLen > _blockSize)
+                return data;
+
+            byte[] result = new byte[data.Length - padLen];
+            Buffer.BlockCopy(data, 0, result, 0, result.Length);
+            return result;
+        }
+
+        private static void Xor(byte[] a, byte[] b)
         {
             for (int i = 0; i < a.Length; i++)
                 a[i] ^= b[i];
         }
 
-        private byte[] ApplyPadding(byte[] data)
+        private static void IncrementCounter(byte[] counter)
         {
-            int paddingSize = _blockSize - (data.Length % _blockSize);
-            if (paddingSize == 0 && _padding != PaddingMode.None)
-                paddingSize = _blockSize;
-
-            byte[] result;
-
-            switch (_padding)
+            for (int i = counter.Length - 1; i >= 0; i--)
             {
-                case PaddingMode.None:
-                    if (data.Length % _blockSize != 0)
-                        throw new ArgumentException("Data length must be multiple of block size when using Padding.None.");
-                    result = data;
+                if (++counter[i] != 0)
                     break;
-
-                case PaddingMode.ZeroPadding:
-                    result = new byte[data.Length + paddingSize];
-                    Array.Copy(data, result, data.Length);
-                    break;
-
-                case PaddingMode.PKCS7:
-                    result = new byte[data.Length + paddingSize];
-                    Array.Copy(data, result, data.Length);
-                    for (int i = data.Length; i < result.Length; i++)
-                        result[i] = (byte)paddingSize;
-                    break;
-
-                default:
-                    throw new NotSupportedException($"Unsupported padding: {_padding}");
             }
-
-            return result;
         }
 
-        private byte[] RemovePadding(byte[] data)
-        {
-            if (_padding == PaddingMode.None)
-                return data;
 
-            if (_padding == PaddingMode.ZeroPadding)
-            {
-                int trim = data.Length;
-                while (trim > 0 && data[trim - 1] == 0)
-                    trim--;
-                byte[] unpadded = new byte[trim];
-                Array.Copy(data, unpadded, trim);
-                return unpadded;
-            }
-
-            if (_padding == PaddingMode.PKCS7)
-            {
-                if (data.Length == 0)
-                    throw new ArgumentException("Invalid PKCS7 padding.");
-
-                int padValue = data[data.Length - 1];
-                if (padValue <= 0 || padValue > _blockSize)
-                    throw new ArgumentException("Invalid PKCS7 padding value.");
-
-                for (int i = data.Length - padValue; i < data.Length; i++)
-                    if (data[i] != padValue)
-                        throw new ArgumentException("Corrupted PKCS7 padding.");
-
-                byte[] unpadded = new byte[data.Length - padValue];
-                Array.Copy(data, 0, unpadded, 0, unpadded.Length);
-                return unpadded;
-            }
-
-            throw new NotSupportedException($"Unsupported padding: {_padding}");
-        }
-
-        public void Dispose()
-        {
-            _cipher.Reset();
-            _disposed = true;
-        }
+        #endregion
+        // public void Dispose()
+        // {
+        //     if (!_disposed)
+        //     {
+        //         _cipher.Dispose();
+        //         _disposed = true;
+        //     }
+        // }
     }
 }

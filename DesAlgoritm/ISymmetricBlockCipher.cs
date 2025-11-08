@@ -6,6 +6,7 @@ namespace DesAlgoritm
         byte[] Encrypt(byte[] inputBlock);
         byte[] Decrypt(byte[] inputBlock);
         void Reset();
+
         bool IsInitialized { get; }
     }
 }

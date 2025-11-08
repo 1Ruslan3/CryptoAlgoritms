@@ -13,7 +13,7 @@ namespace DesAlgoritm
 
             for (int i = 0; i < positions.Length; i++)
             {
-                int srcLogical = positions[i]; // 1-based
+                int srcLogical = positions[i]; 
                 bool bit = GetBit(input, srcLogical);
                 int destLogical = i + 1;
                 SetBit(output, destLogical, bit);

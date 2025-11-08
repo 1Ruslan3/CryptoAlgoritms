@@ -11,23 +11,20 @@ namespace DesAlgoritm
             byte[] key = Encoding.ASCII.GetBytes("12345678"); 
             byte[] iv = Encoding.ASCII.GetBytes("ABCDEFGH");  
 
-            using (var cipher = new BlockCipher(
-                blockSizeBytes: 8,
+            var cipher = new BlockCipher(
+                blockSize: 8,
                 key: key,
-                mode: CipherMode.CBC,
-                padding: PaddingMode.PKCS7,
+                mode: CipherMode.ECB,
+                padding: PaddingMode.None,
                 iv: iv,
-                algorithm: des))
-            {
-                string plaintext = "Пример текста для DES";
-                byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
-
-                byte[] encrypted = cipher.Encrypt(plainBytes);
-                Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", ""));
-
-                byte[] decrypted = cipher.Decrypt(encrypted);
-                Console.WriteLine("Decrypted: " + Encoding.UTF8.GetString(decrypted));
-            }
+                algorithm: des);
+                
+            string plaintext = "ABCDEFGHABCDEFGH";
+            byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
+            byte[] encrypted = cipher.Encrypt(plainBytes);
+            Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", "").Length);
+            byte[] decrypted = cipher.Decrypt(encrypted);
+            Console.WriteLine("Decrypted: " + Encoding.UTF8.GetString(decrypted));
         }
     }
 }
