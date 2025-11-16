@@ -22,7 +22,7 @@ namespace DesAlgoritm
             string plaintext = "ABCDEFGHABCDEFGH";
             byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
             byte[] encrypted = cipher.Encrypt(plainBytes);
-            Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", "").Length);
+            Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", ""));
             byte[] decrypted = cipher.Decrypt(encrypted);
             Console.WriteLine("Decrypted: " + Encoding.UTF8.GetString(decrypted));
         }

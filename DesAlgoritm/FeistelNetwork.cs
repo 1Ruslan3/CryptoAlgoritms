@@ -2,11 +2,16 @@ namespace DesAlgoritm
 {
     public class FeistelNetwork
     {
+        #region Fields
         private readonly IKeyExpansion _keyExpansion;
         private readonly IEncryptionRound _roundFunction;
         private readonly int _blockSizeBytes;
         private byte[][]? _subKeys;
         private bool _initialized;
+
+        #endregion
+
+        #region Constructor
 
         public FeistelNetwork(IKeyExpansion keyExpansion, IEncryptionRound roundFunction, int blockSizeBytes)
         {
@@ -16,6 +21,9 @@ namespace DesAlgoritm
             _blockSizeBytes = blockSizeBytes;
         }
 
+        #endregion
+       
+        #region Methods
         public bool IsInitialized => _initialized;
 
         public void Initialize(byte[] key)
@@ -88,5 +96,7 @@ namespace DesAlgoritm
                 outBytes[i] = (byte)(a[i] ^ b[i]);
             return outBytes;
         }
+
+        #endregion
     }
 }

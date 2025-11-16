@@ -2,14 +2,15 @@ using System.Collections;
 
 namespace DesAlgoritm
 {
-    public class DesCipher : ISymmetricBlockCipher, IDisposable
+    public sealed class DesCipher : ISymmetricBlockCipher
     {
-        #region fields
+        #region Fields
+        
         private readonly FeistelNetwork _feistel;
-        private bool _disposed;
+
         #endregion
 
-        #region constructor
+        #region Constructor
         public DesCipher()
         {
             _feistel = new FeistelNetwork(new DesKeyExpansion(), new DesRoundFunction(), 8);
@@ -19,7 +20,7 @@ namespace DesAlgoritm
         #region Nested class
         public class DesKeyExpansion : IKeyExpansion
         {
-            #region box
+            #region Box
 
             private static readonly int[] PC1 = {
             57,49,41,33,25,17,9,1,58,50,42,34,26,18,
@@ -39,7 +40,7 @@ namespace DesAlgoritm
 
             #endregion
 
-            #region methods
+            #region Methods
 
             public byte[][] ExpandKey(byte[] key)
             {
@@ -65,8 +66,6 @@ namespace DesAlgoritm
                     PackLogicalBits(D, 1, 28, cd, 29);
 
                     byte[] pc2Result = BitPermutation.PermuteBits(cd, PC2);
-                    // PC2 outputs 48 bits, but PermuteBits may allocate 7 bytes due to max position 56
-                    // Extract exactly 48 bits (6 bytes) for the round key
                     subKeys[round] = new byte[6];
                     Array.Copy(pc2Result, 0, subKeys[round], 0, 6);
                 }
@@ -157,7 +156,7 @@ namespace DesAlgoritm
 
         public class DesRoundFunction : IEncryptionRound
         {
-            #region box
+            #region Box
 
             private static readonly int[] E = {
             32,1,2,3,4,5,4,5,6,7,8,9,8,9,10,11,12,13,12,13,14,15,16,17,
@@ -182,7 +181,7 @@ namespace DesAlgoritm
 
             #endregion
 
-            #region methods
+            #region Methods
 
             public byte[] EncryptRound(byte[] inputBlock, byte[] roundKey)
             {
@@ -191,7 +190,6 @@ namespace DesAlgoritm
                     throw new ArgumentException("DES F: input 4 bytes, key 6 bytes.");
 
                 byte[] expanded = BitPermutation.PermuteBits(inputBlock, E);
-                // E expansion outputs 48 bits (6 bytes)
                 if (expanded.Length != 6)
                     throw new InvalidOperationException($"E expansion should produce 6 bytes, got {expanded.Length}");
 
@@ -249,7 +247,7 @@ namespace DesAlgoritm
         }
         #endregion
 
-        #region box
+        #region Box
         private static readonly int[] IP = {
             58,50,42,34,26,18,10,2,
             60,52,44,36,28,20,12,4,
@@ -273,16 +271,14 @@ namespace DesAlgoritm
         };
         #endregion
 
-        #region methods
+        #region Methods
         public void Initialize(byte[] key)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(DesCipher));
             _feistel.Initialize(key);
         }
 
         public byte[] Encrypt(byte[] inputBlock)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(DesCipher));
             if (inputBlock == null || inputBlock.Length != 8)
                 throw new ArgumentException("Block must be 8 bytes.");
             if (!_feistel.IsInitialized)
@@ -296,7 +292,6 @@ namespace DesAlgoritm
 
         public byte[] Decrypt(byte[] inputBlock)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(DesCipher));
             if (inputBlock == null || inputBlock.Length != 8)
                 throw new ArgumentException("Block must be 8 bytes.");
             if (!_feistel.IsInitialized)
@@ -313,12 +308,5 @@ namespace DesAlgoritm
         public bool IsInitialized => _feistel.IsInitialized;
         #endregion
 
-        #region IDisposable
-        public void Dispose()
-        {
-            Reset();
-            _disposed = true;
-        }
-        #endregion
     }
 }
