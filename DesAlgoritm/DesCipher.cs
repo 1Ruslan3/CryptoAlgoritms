@@ -5,8 +5,10 @@ namespace DesAlgoritm
     public sealed class DesCipher : ISymmetricBlockCipher
     {
         #region Fields
-        
+
         private readonly FeistelNetwork _feistel;
+
+        public int BlockSize => 8;
 
         #endregion
 

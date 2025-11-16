@@ -8,5 +8,7 @@ namespace DesAlgoritm
         void Reset();
 
         bool IsInitialized { get; }
+
+        int BlockSize { get; }
     }
 }

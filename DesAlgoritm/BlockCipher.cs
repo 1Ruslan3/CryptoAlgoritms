@@ -4,31 +4,31 @@ namespace DesAlgoritm
     {
         #region Fields
         private readonly ISymmetricBlockCipher _cipher;
-        private readonly int _blockSize;
         private readonly CipherMode _mode;
         private readonly PaddingMode _padding;
         private readonly byte[] _key;
         private readonly byte[] _iv;
+        private readonly int _blockSize;
 
         #endregion
       
         #region Constructor
         public BlockCipher(
-            int blockSize,
             byte[] key,
             CipherMode mode,
             PaddingMode padding,
-            byte[] iv,
-            ISymmetricBlockCipher algorithm)
+            ISymmetricBlockCipher algorithm,
+            byte[]? iv = null)
         {
             if (algorithm == null)
                 throw new ArgumentNullException(nameof(algorithm));
             if (key == null)
                 throw new ArgumentNullException(nameof(key));
-            if (blockSize <= 0)
-                throw new ArgumentException("Block size must be positive.", nameof(blockSize));
+                
+            _blockSize = algorithm.BlockSize;
+            if (_blockSize <= 0)
+                throw new ArgumentException("Block size must be positive.", nameof(_blockSize));
 
-            _blockSize = blockSize;
             _mode = mode;
             _padding = padding;
             _key = key;

@@ -12,14 +12,13 @@ namespace DesAlgoritm
             byte[] iv = Encoding.ASCII.GetBytes("ABCDEFGH");  
 
             var cipher = new BlockCipher(
-                blockSize: 8,
                 key: key,
-                mode: CipherMode.ECB,
-                padding: PaddingMode.None,
-                iv: iv,
-                algorithm: des);
+                mode: CipherMode.PCBC,
+                padding: PaddingMode.PKCS7,
+                algorithm: des,
+                iv: iv);
                 
-            string plaintext = "ABCDEFGHABCDEFGH";
+            string plaintext = "ABCDEFGHABCDEFGHHHHH";
             byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
             byte[] encrypted = cipher.Encrypt(plainBytes);
             Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", ""));
@@ -28,3 +27,4 @@ namespace DesAlgoritm
         }
     }
 }
+
