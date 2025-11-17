@@ -6,9 +6,9 @@ namespace DesAlgoritm
         private readonly ISymmetricBlockCipher _cipher;
         private readonly CipherMode _mode;
         private readonly PaddingMode _padding;
-        private readonly byte[] _key;
         private readonly byte[] _iv;
         private readonly int _blockSize;
+        private readonly ICipherMode _cipherMode;
 
         #endregion
       
@@ -31,10 +31,10 @@ namespace DesAlgoritm
 
             _mode = mode;
             _padding = padding;
-            _key = key;
             _iv = iv ?? new byte[_blockSize];
             _cipher = algorithm;
-            _cipher.Initialize(_key);
+            _cipher.Initialize(key);
+            _cipherMode = new ModeWork(_blockSize, _iv);
         }
 
         #endregion
@@ -48,65 +48,16 @@ namespace DesAlgoritm
             byte[] padded = ApplyPadding(data);
             byte[] output = new byte[padded.Length];
 
-            byte[] prevBlock = new byte[_blockSize];
-            Buffer.BlockCopy(_iv, 0, prevBlock, 0, _blockSize);
-
-            byte[] counter = new byte[_blockSize];
-            Buffer.BlockCopy(_iv, 0, counter, 0, _blockSize);
+            _cipherMode.Reset();
 
             for (int offset = 0; offset < padded.Length; offset += _blockSize)
             {
                 byte[] block = new byte[_blockSize];
                 Buffer.BlockCopy(padded, offset, block, 0, _blockSize);
-                byte[] encryptedBlock;
 
-                switch (_mode)
-                {
-                    case CipherMode.ECB:
-                        encryptedBlock = _cipher.Encrypt(block);
-                        break;
-
-                    case CipherMode.CBC:
-                        Xor(block, prevBlock);
-                        encryptedBlock = _cipher.Encrypt(block);
-                        Buffer.BlockCopy(encryptedBlock, 0, prevBlock, 0, _blockSize);
-                        break;
-
-                    case CipherMode.PCBC:
-                        Xor(block, prevBlock);
-                        encryptedBlock = _cipher.Encrypt(block);
-                        byte[] temp = new byte[_blockSize];
-                        Buffer.BlockCopy(block, 0, temp, 0, _blockSize);
-                        Xor(temp, encryptedBlock);
-                        Buffer.BlockCopy(temp, 0, prevBlock, 0, _blockSize);
-                        break;
-
-                    case CipherMode.CFB:
-                        byte[] feedback = _cipher.Encrypt(prevBlock);
-                        Xor(block, feedback);
-                        encryptedBlock = block;
-                        Buffer.BlockCopy(encryptedBlock, 0, prevBlock, 0, _blockSize);
-                        break;
-
-                    case CipherMode.OFB:
-                        byte[] ofbFeedback = _cipher.Encrypt(prevBlock);
-                        Buffer.BlockCopy(ofbFeedback, 0, prevBlock, 0, _blockSize);
-                        encryptedBlock = new byte[_blockSize];
-                        Buffer.BlockCopy(block, 0, encryptedBlock, 0, _blockSize);
-                        Xor(encryptedBlock, ofbFeedback);
-                        break;
-
-                    case CipherMode.CTR:
-                        byte[] ctrEnc = _cipher.Encrypt(counter);
-                        IncrementCounter(counter);
-                        encryptedBlock = new byte[_blockSize];
-                        Buffer.BlockCopy(block, 0, encryptedBlock, 0, _blockSize);
-                        Xor(encryptedBlock, ctrEnc);
-                        break;
-
-                    default:
-                        throw new NotSupportedException($"Mode {_mode} not supported.");
-                }
+                byte[] encryptedBlock = new byte[_blockSize];
+                
+                _cipherMode.EncryptBlock(_mode, block, encryptedBlock, _cipher.Encrypt);
 
                 Buffer.BlockCopy(encryptedBlock, 0, output, offset, _blockSize);
             }
@@ -123,66 +74,15 @@ namespace DesAlgoritm
 
             byte[] output = new byte[data.Length];
 
-            byte[] prevBlock = new byte[_blockSize];
-            Buffer.BlockCopy(_iv, 0, prevBlock, 0, _blockSize);
-
-            byte[] counter = new byte[_blockSize];
-            Buffer.BlockCopy(_iv, 0, counter, 0, _blockSize);
+             _cipherMode.Reset();
 
             for (int offset = 0; offset < data.Length; offset += _blockSize)
             {
                 byte[] block = new byte[_blockSize];
                 Buffer.BlockCopy(data, offset, block, 0, _blockSize);
-                byte[] decryptedBlock;
 
-                switch (_mode)
-                {
-                    case CipherMode.ECB:
-                        decryptedBlock = _cipher.Decrypt(block);
-                        break;
-
-                    case CipherMode.CBC:
-                        decryptedBlock = _cipher.Decrypt(block);
-                        Xor(decryptedBlock, prevBlock);
-                        Buffer.BlockCopy(block, 0, prevBlock, 0, _blockSize);
-                        break;
-
-                    case CipherMode.PCBC:
-                        decryptedBlock = _cipher.Decrypt(block);
-                        byte[] temp = new byte[_blockSize];
-                        Buffer.BlockCopy(decryptedBlock, 0, temp, 0, _blockSize);
-                        Xor(decryptedBlock, prevBlock);
-                        Xor(temp, block);
-                        Buffer.BlockCopy(temp, 0, prevBlock, 0, _blockSize);
-                        break;
-
-                    case CipherMode.CFB:
-                        byte[] feedback = _cipher.Encrypt(prevBlock);
-                        decryptedBlock = new byte[_blockSize];
-                        Buffer.BlockCopy(block, 0, decryptedBlock, 0, _blockSize);
-                        Xor(decryptedBlock, feedback);
-                        Buffer.BlockCopy(block, 0, prevBlock, 0, _blockSize);
-                        break;
-
-                    case CipherMode.OFB:
-                        byte[] ofbFeedback = _cipher.Encrypt(prevBlock);
-                        Buffer.BlockCopy(ofbFeedback, 0, prevBlock, 0, _blockSize);
-                        decryptedBlock = new byte[_blockSize];
-                        Buffer.BlockCopy(block, 0, decryptedBlock, 0, _blockSize);
-                        Xor(decryptedBlock, ofbFeedback);
-                        break;
-
-                    case CipherMode.CTR:
-                        byte[] ctrEnc = _cipher.Encrypt(counter);
-                        IncrementCounter(counter);
-                        decryptedBlock = new byte[_blockSize];
-                        Buffer.BlockCopy(block, 0, decryptedBlock, 0, _blockSize);
-                        Xor(decryptedBlock, ctrEnc);
-                        break;
-
-                    default:
-                        throw new NotSupportedException($"Mode {_mode} not supported.");
-                }
+                byte[] decryptedBlock = new byte[_blockSize];
+                _cipherMode.DecryptBlock(_mode, block, decryptedBlock, _cipher.Encrypt, _cipher.Decrypt);
 
                 Buffer.BlockCopy(decryptedBlock, 0, output, offset, _blockSize);
             }
@@ -267,13 +167,5 @@ namespace DesAlgoritm
 
 
         #endregion
-        // public void Dispose()
-        // {
-        //     if (!_disposed)
-        //     {
-        //         _cipher.Dispose();
-        //         _disposed = true;
-        //     }
-        // }
     }
 }

@@ -13,7 +13,7 @@ namespace DesAlgoritm
 
             var cipher = new BlockCipher(
                 key: key,
-                mode: CipherMode.PCBC,
+                mode: CipherMode.CFB,
                 padding: PaddingMode.PKCS7,
                 algorithm: des,
                 iv: iv);
