@@ -1,139 +1,9 @@
-// namespace DesAlgoritm
-// {
-//     public class ModeWork : ICipherMode
-//     {
-//         private int _blockSize;
-//         private CipherMode _mode;
-//         private byte[] _prev;
-//         private byte[] _counter;
-//         private Dictionary<CipherMode, Action<byte[], byte[], Func<byte[], byte[]>>> EncryptActions;
-//         private Dictionary<CipherMode, Action<byte[], byte[], Func<byte[], byte[]>, Func<byte[], byte[]>>> DecryptActions;
-
-//         public ModeWork(int blockSize, byte[] iv)
-//         {
-//             _blockSize = blockSize;
-//             _prev = (byte[])iv.Clone();
-//             _counter = (byte[])iv.Clone();
-
-//             InitEncryptActions(); 
-//             InitDecryptActions();
-//         }
-
-//         public void EncryptBlock(
-//             CipherMode mode,
-//             byte[] input,
-//             byte[] output,
-//             Func<byte[], byte[]> encryptBlock)
-//         {
-//             EncryptActions[_mode](input, output, encryptBlock);
-//         }
-
-//         public void DecryptBlock(
-//             CipherMode mode,
-//             byte[] input,
-//             byte[] output,
-//             Func<byte[], byte[]> encryptBlock,
-//             Func<byte[], byte[]> decryptBlock)
-//         {
-//             DecryptActions[_mode](input, output, encryptBlock, decryptBlock);
-//         }
-
-//         public void Reset()
-//         {
-//             Array.Clear(_prev, 0, _prev.Length);
-//             Array.Clear(_counter, 0, _counter.Length);
-//         }
-
-
-//         private void InitEncryptActions()
-//         {
-//             EncryptActions = new()
-//             {
-//                 {CipherMode.ECB, EncryptECB},
-//                 {CipherMode.CBC, EncryptCBC},
-//                 {CipherMode.PCBC, EncryptPCBC},
-//                 {CipherMode.CFB, EncryptCFB},
-//                 {CipherMode.OFB, EncryptOFB},
-//                 {CipherMode.CTR, EncryptCTR},
-//             };
-//         }
-
-//          private void InitDecryptActions()
-//         {
-//             throw new Exception("sd");
-//         }
-
-//         private void EncryptECB(byte[] block, byte[] output, Func<byte[], byte[]> enc)
-//         {
-//             output = enc(block);
-//         }
-
-//         private void EncryptCBC(byte[] block, byte[] output, Func<byte[], byte[]> enc)
-//         {
-//             Xor(block, _prev);
-//             output = enc(block);
-//             Buffer.BlockCopy(output, 0, _prev, 0, _blockSize);
-//         }
-
-//         private void EncryptPCBC(byte[] block, byte[] output, Func<byte[], byte[]> enc)
-//         {
-//             Xor(block, _prev);
-//             output = enc(block);
-//             byte[] temp = new byte[_blockSize];
-//             Buffer.BlockCopy(block, 0, temp, 0, _blockSize);
-//             Xor(temp, output);
-//             Buffer.BlockCopy(temp, 0, _prev, 0, _blockSize);
-//         }
-
-//         private void EncryptCFB(byte[] block, byte[] output, Func<byte[], byte[]> enc)
-//         {
-//             byte[] feedback = enc(_prev);
-//             Xor(block, feedback);
-//             output = block;
-//             Buffer.BlockCopy(output, 0, _prev, 0, _blockSize);
-//         }
-
-//         private void EncryptOFB(byte[] block, byte[] output, Func<byte[], byte[]> enc)
-//         {
-//             byte[] feedback = enc(_prev);
-//             Buffer.BlockCopy(feedback, 0, _prev, 0, _blockSize);
-//             output = new byte[_blockSize];
-//             Buffer.BlockCopy(block, 0, output, 0, _blockSize);
-//             Xor(output, feedback);
-//         }
-
-//         private void EncryptCTR(byte[] block, byte[] output, Func<byte[], byte[]> enc)
-//         {
-//             byte[] ctr = enc(_counter);
-//             IncrementCounter(_counter);
-//             output = new byte[_blockSize];
-//             Buffer.BlockCopy(block, 0, output, 0, _blockSize);
-//             Xor(output, ctr);
-//         }
-
-//         private static void Xor(byte[] a, byte[] b)
-//         {
-//             for (int i = 0; i < a.Length; i++)
-//                 a[i] ^= b[i];
-//         }
-
-//         private static void IncrementCounter(byte[] counter)
-//         {
-//             for (int i = counter.Length - 1; i >= 0; i--)
-//             {
-//                 if (++counter[i] != 0)
-//                     break;
-//             }
-//         }
-//     }
-// }
-
 namespace DesAlgoritm
 {
     public class ModeWork : ICipherMode
     {
         private readonly int _blockSize;
-        private readonly byte[] _initialIV;
+        private readonly byte[] _iv;
 
         private byte[] _prev;
         private byte[] _counter;
@@ -144,7 +14,7 @@ namespace DesAlgoritm
         public ModeWork(int blockSize, byte[] iv)
         {
             _blockSize = blockSize;
-            _initialIV = (byte[])iv.Clone();
+            _iv = (byte[])iv.Clone();
 
             _prev = (byte[])iv.Clone();
             _counter = (byte[])iv.Clone();
@@ -158,8 +28,8 @@ namespace DesAlgoritm
 
         public void Reset()
         {
-            Buffer.BlockCopy(_initialIV, 0, _prev, 0, _blockSize);
-            Buffer.BlockCopy(_initialIV, 0, _counter, 0, _blockSize);
+            Buffer.BlockCopy(_iv, 0, _prev, 0, _blockSize);
+            Buffer.BlockCopy(_iv, 0, _counter, 0, _blockSize);
         }
 
         public void EncryptBlock(
