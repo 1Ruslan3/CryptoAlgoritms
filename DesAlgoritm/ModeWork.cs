@@ -1,6 +1,6 @@
 namespace DesAlgoritm
 {
-    public class ModeWork : ICipherMode
+    public sealed class ModeWork : ICipherMode
     {
         private readonly int _blockSize;
         private readonly byte[] _iv;
@@ -50,10 +50,6 @@ namespace DesAlgoritm
         {
             DecryptActions[mode](input, output, encBlock, decBlock);
         }
-
-        // =========================
-        //  ENCRYPTION
-        // =========================
 
         private void InitEncryptActions()
         {
@@ -136,10 +132,6 @@ namespace DesAlgoritm
             Buffer.BlockCopy(buf, 0, output, 0, _blockSize);
         }
 
-        // =========================
-        //  DECRYPTION
-        // =========================
-
         private void InitDecryptActions()
         {
             DecryptActions = new()
@@ -185,7 +177,6 @@ namespace DesAlgoritm
             Buffer.BlockCopy(prevXor, 0, _prev, 0, _blockSize);
         }
 
-
         private void DecryptCFB(byte[] block, byte[] output, Func<byte[], byte[]> enc, Func<byte[], byte[]> dec)
         {
             byte[] feedback = enc(_prev);
@@ -220,11 +211,7 @@ namespace DesAlgoritm
 
             Buffer.BlockCopy(plain, 0, output, 0, _blockSize);
         }
-
-        // =========================
-        //  HELPERS
-        // =========================
-
+        
         private static void Xor(byte[] a, byte[] b)
         {
             for (int i = 0; i < a.Length; i++)
