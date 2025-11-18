@@ -1,8 +1,9 @@
 using System.Collections;
+using ContextCipher;
 
 namespace DesAlgoritm
 {
-    public sealed class DesCipher : ISymmetricBlockCipher
+    public sealed class DesCipher : ISymmetricBlockCipher  
     {
         #region Fields
 

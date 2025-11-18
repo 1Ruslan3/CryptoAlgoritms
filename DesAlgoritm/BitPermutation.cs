@@ -1,5 +1,3 @@
-using System;
-
 namespace DesAlgoritm
 {
     public static class BitPermutation

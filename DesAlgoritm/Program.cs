@@ -1,4 +1,5 @@
-﻿using System.Text;
+using System.Text;
+using ContextCipher;
 
 namespace DesAlgoritm
 {
@@ -11,14 +12,14 @@ namespace DesAlgoritm
             byte[] key = Encoding.ASCII.GetBytes("12345678"); 
             byte[] iv = Encoding.ASCII.GetBytes("ABCDEFGH");  
 
-            var cipher = new BlockCipher(
+            var cipher = new ContextCipher.ContextCipher(
                 key: key,
                 mode: CipherMode.PCBC,
                 padding: PaddingMode.PKCS7,
                 algorithm: des,
                 iv: iv);
                 
-            string plaintext = "ABCDEFGHABCDEFGHHHHH";
+            string plaintext = "ABCDEFGHABCDEFGHHHHHwfvdsfewfvr";
             byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
             byte[] encrypted = cipher.Encrypt(plainBytes);
             Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", ""));
@@ -27,4 +28,3 @@ namespace DesAlgoritm
         }
     }
 }
-
