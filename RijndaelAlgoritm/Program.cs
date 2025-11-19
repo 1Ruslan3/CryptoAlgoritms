@@ -1,22 +1,21 @@
-using System.Text;
+﻿using System.Text;
 using ContextCipher;
 
-namespace DesAlgoritm
+namespace RijndaelAlgoritm
 {
     class Program
     {
         static void Main()
         {
-            var des = new DesCipher();
-
             byte[] key = Encoding.ASCII.GetBytes("12345678"); 
-            byte[] iv = Encoding.ASCII.GetBytes("12345678");  
+            byte[] iv = Encoding.ASCII.GetBytes("12345678ABCDEFGH");  
+            var rijndael = new RijndaelCipher(128);
 
             var cipher = new ContextCipher.ContextCipher(
                 key: key,
-                mode: CipherMode.ECB,
+                mode: CipherMode.CBC,
                 padding: PaddingMode.ANSI_X923,
-                algorithm: des,
+                algorithm: rijndael,
                 iv: iv);
                 
             string plaintext = "ABCDEFGHABCDEFGHHHHHwfvdsfewfvr";
