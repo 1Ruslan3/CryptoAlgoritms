@@ -4,17 +4,15 @@ public sealed class Program
 {
     public static void Main()
     {
-        byte[] data = System.Text.Encoding.UTF8.GetBytes("Sqwoz bab");
-        byte[] key  = System.Text.Encoding.UTF8.GetBytes("secret");
+        byte[] data = System.Text.Encoding.UTF8.GetBytes("Sqwoz BAB");
+        byte[] key = System.Text.Encoding.UTF8.GetBytes("secret");
 
         var rc4 = new RC4(key);
+        rc4.InPlace(data);
 
-        rc4.ProcessInPlace(data); 
         Console.WriteLine("Encrypted: " + BitConverter.ToString(data).Replace("-", ""));
-
-        var rc4dec = new RC4(key);
-        
-        rc4dec.ProcessInPlace(data); 
+        rc4.Reset(key);
+        rc4.InPlace(data);
         Console.WriteLine("Decrypted: " + System.Text.Encoding.UTF8.GetString(data));
     }
 }

@@ -64,4 +64,20 @@ public class RC4
             await output.WriteAsync(buffer, 0, bytesRead, cancellationToken);
         }
     }
+
+        public void Reset(byte[] key)
+    {
+        for (int i = 0; i < 256; i++)
+            S[i] = (byte)i;
+
+        int j = 0;
+        for (int i = 0; i < 256; i++)
+        {
+            j = (j + S[i] +  key[i % key.Length]) & 255;
+            Swap(i, j);
+        }
+
+        x = 0;
+        y = 0;
+    }
 }
