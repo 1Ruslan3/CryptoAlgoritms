@@ -7,7 +7,7 @@ public sealed class Program
         byte[] data = System.Text.Encoding.UTF8.GetBytes("Sqwoz BAB");
         byte[] key = System.Text.Encoding.UTF8.GetBytes("secret");
 
-        var rc4 = new RC4(key);
+        var rc4 = new RC4Cipher(key);
         rc4.InPlace(data);
 
         Console.WriteLine("Encrypted: " + BitConverter.ToString(data).Replace("-", ""));

@@ -1,12 +1,12 @@
 namespace Rc4Algoritm;
 
-public class RC4
+public class RC4Cipher
 {
     private readonly byte[] S = new byte[256];
     private int x = 0;
     private int y = 0;
 
-    public RC4(byte[] key)
+    public RC4Cipher(byte[] key)
     {
         Initialize(key);
     }
@@ -58,14 +58,14 @@ public class RC4
         int bytesRead;
 
         while ((bytesRead = await input.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
-        {
+        { 
             InPlace(buffer.AsSpan(0, bytesRead));
 
             await output.WriteAsync(buffer, 0, bytesRead, cancellationToken);
         }
     }
 
-        public void Reset(byte[] key)
+    public void Reset(byte[] key)
     {
         for (int i = 0; i < 256; i++)
             S[i] = (byte)i;
