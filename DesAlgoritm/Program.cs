@@ -7,9 +7,9 @@ namespace DesAlgoritm
     {
         static void Main()
         {
-            var des = new DesCipher();
+            var des = new TripleDesCipher(mode: TripleDesMode.EEE);
 
-            byte[] key = Encoding.ASCII.GetBytes("12345678"); 
+            byte[] key = Encoding.ASCII.GetBytes("1234567812345678"); 
             byte[] iv = Encoding.ASCII.GetBytes("12345678");  
 
             var cipher = new ContextCipher.ContextCipher(
@@ -19,7 +19,7 @@ namespace DesAlgoritm
                 algorithm: des,
                 iv: iv);
                 
-            string plaintext = "ABCDEFGHABCDEFGHHHHHwfvdsfewfvr";
+            string plaintext = "ABCDEFGHABCDEFGHHHHH";
             byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
             byte[] encrypted = cipher.Encrypt(plainBytes);
             Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", ""));
