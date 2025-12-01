@@ -2,7 +2,7 @@ using ContextCipher;
 
 namespace RijndaelAlgoritm
 {
-    public sealed class RijndaelCipher : ISymmetricBlockCipher  
+    public sealed class RijndaelCipher : ISymmetricBlockCipher   
     {
         private int Nb;   
         private int Nk;  
@@ -32,7 +32,7 @@ namespace RijndaelAlgoritm
             Nk = key.Length / 4;
             Nr = Math.Max(Nb, Nk) + 6;
 
-            GenerateSBoxes_FIPS197();
+            GenerateSBoxes();
             RoundKeys = ExpandKey(key);
         }
 
@@ -291,7 +291,7 @@ namespace RijndaelAlgoritm
         private static byte InverseAffineTransform_FIPS(byte s)
             => (byte)(Rotl8(s, 1) ^ Rotl8(s, 3) ^ Rotl8(s, 6) ^ 0x05);
 
-        private void GenerateSBoxes_FIPS197()
+        private void GenerateSBoxes()
         {
             for (int x = 0; x < 256; x++)
             {

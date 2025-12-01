@@ -7,24 +7,48 @@ namespace DesAlgoritm
     {
         static void Main()
         {
-            var des = new TripleDesCipher(mode: TripleDesMode.EEE);
+            var des = new DesCipher();
+            var deal = new DealCipher();
+            var rijndael = new RijndaelAlgoritm.RijndaelCipher();
+            var magenta = new MagentaAlgoritm.MagentaCipher();
 
-            byte[] key = Encoding.ASCII.GetBytes("1234567812345678"); 
-            byte[] iv = Encoding.ASCII.GetBytes("12345678");  
+            string inputFile  = "input.txt";
+            string encryptedFile = "encrypted.bin";
+            string decryptedFile = "decrypted.txt";
+
+            // File.WriteAllText(inputFile,
+            //     "Hello! This is a test file.\nУРРРРРАААААААА");
+
+            byte[] key = Encoding.ASCII.GetBytes("1234567887654321"); 
+            byte[] iv = Encoding.ASCII.GetBytes("1234567887654321");  
 
             var cipher = new ContextCipher.ContextCipher(
                 key: key,
-                mode: CipherMode.ECB,
-                padding: PaddingMode.ANSI_X923,
-                algorithm: des,
+                mode: CipherMode.CBC,
+                padding: PaddingMode.PKCS7,
+                algorithm: magenta,
                 iv: iv);
+
+            Console.WriteLine("Encrypting file...");
+            cipher.EncryptFile(inputFile, encryptedFile);
+            Console.WriteLine($"Encrypted to: {encryptedFile}");
+
+            Console.WriteLine("Decrypting file...");
+            cipher.DecryptFile(encryptedFile, decryptedFile);
+            Console.WriteLine($"Decrypted to: {decryptedFile}");
+
+            byte[] data = File.ReadAllBytes(decryptedFile);
+            string text = Encoding.UTF8.GetString(data);
+            Console.WriteLine(text);
+
+
                 
-            string plaintext = "ABCDEFGHABCDEFGHHHHH";
-            byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
-            byte[] encrypted = cipher.Encrypt(plainBytes);
-            Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", ""));
-            byte[] decrypted = cipher.Decrypt(encrypted);
-            Console.WriteLine("Decrypted: " + Encoding.UTF8.GetString(decrypted));
+            // string plaintext = "ABCDEFGHABCDEFGHHHHH";
+            // byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
+            // byte[] encrypted = cipher.Encrypt(plainBytes);
+            // Console.WriteLine("Encrypted (hex): " + BitConverter.ToString(encrypted).Replace("-", ""));
+            // byte[] decrypted = cipher.Decrypt(encrypted);
+            // Console.WriteLine("Decrypted: " + Encoding.UTF8.GetString(decrypted));
         }
     }
 }
