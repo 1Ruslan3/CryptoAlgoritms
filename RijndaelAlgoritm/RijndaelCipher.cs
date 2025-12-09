@@ -8,7 +8,7 @@ namespace RijndaelAlgoritm
         private int Nk;  
         private int Nr;  
         private byte[][] RoundKeys; 
-        private readonly byte[] sBox = new byte[256];
+          private readonly byte[] sBox = new byte[256];
         private readonly byte[] invSBox = new byte[256];
         private readonly int gfPoly;
 
@@ -16,7 +16,7 @@ namespace RijndaelAlgoritm
 
         public bool IsInitialized => throw new NotImplementedException();
 
-        public RijndaelCipher(int blockBits = 128, int gfPolynomial = 0x1B)
+        public RijndaelCipher(int blockBits = 128, int gfPolynomial = 0x139)
         {
             if (blockBits % 32 != 0) throw new ArgumentException("blockBits must be multiple of 32");
             Nb = blockBits / 32;
@@ -285,10 +285,10 @@ namespace RijndaelAlgoritm
             return (byte)(((x << shift) | (x >> (8 - shift))) & 0xFF);
         }
 
-        private static byte AffineTransform_FIPS(byte b)
+        private static byte AffineTransform(byte b)
             => (byte)(b ^ Rotl8(b, 1) ^ Rotl8(b, 2) ^ Rotl8(b, 3) ^ Rotl8(b, 4) ^ 0x63);
 
-        private static byte InverseAffineTransform_FIPS(byte s)
+        private static byte InverseAffineTransform(byte s)
             => (byte)(Rotl8(s, 1) ^ Rotl8(s, 3) ^ Rotl8(s, 6) ^ 0x05);
 
         private void GenerateSBoxes()
@@ -297,13 +297,13 @@ namespace RijndaelAlgoritm
             {
                 byte a = (byte)x;
                 byte b = (a == 0) ? (byte)0 : MultiplicativeInverseGF(a);
-                sBox[x] = AffineTransform_FIPS(b);
+                sBox[x] = AffineTransform(b);
             }
 
             for (int y = 0; y < 256; y++)
             {
                 byte s = (byte)y;
-                byte b = InverseAffineTransform_FIPS(s);
+                byte b = InverseAffineTransform(s);
                 byte a = (b == 0) ? (byte)0 : MultiplicativeInverseGF(b);
                 invSBox[y] = a;
             }

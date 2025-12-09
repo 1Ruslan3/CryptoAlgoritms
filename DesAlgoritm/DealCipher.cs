@@ -9,7 +9,7 @@ namespace DesAlgoritm
         private bool _initialized;
         #endregion
 
-        #region Constructo
+        #region Constructor
         public DealCipher()
         {
             _feistel = new FeistelNetwork(new DealKeyExpansion(), new DealRoundFunction(), 16);
@@ -60,7 +60,7 @@ namespace DesAlgoritm
                         Buffer.BlockCopy(tmp, 0, buffer, off, DES_KEY_BYTES);
                     }
 
-                    int nextOff = ((i + 1) * DES_KEY_BYTES) % required;
+                    int nextOff = (i + 1) * DES_KEY_BYTES % required;
                     for (int j = 0; j < DES_KEY_BYTES; j++)
                         buffer[off + j] ^= buffer[nextOff + j];
                 }

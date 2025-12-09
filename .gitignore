@@ -30,3 +30,6 @@ Thumbs.db
 
 # VS Code
 .vscode/
+
+# txt files
+*.txt

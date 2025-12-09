@@ -26,7 +26,7 @@ namespace DesAlgoritm
                 key: key,
                 mode: CipherMode.CBC,
                 padding: PaddingMode.PKCS7,
-                algorithm: magenta,
+                algorithm: deal,
                 iv: iv);
 
             Console.WriteLine("Encrypting file...");

@@ -1,22 +1,45 @@
-// using System.Numerics;
+using System.Numerics;
+using System.Text;
 
-// namespace RsaAlgoritm
-// {
-//     class Program
-//     {
-//         public static void Main()
-//         {
-//             var nts = new NumberTheoryService();
+namespace RsaAlgoritm
+{
+    class Program
+    {
+        static void Main()
+        {
+            IPrimalityTest test = new FermatTest(20);
 
-//             IProbabilisticPrimalityTest fermat = new FermatPrimalityTest(nts); 
-//             IProbabilisticPrimalityTest ss = new SolovayStrassenPrimalityTest(nts);
-//             IProbabilisticPrimalityTest mr = new MillerRabinPrimalityTest(nts);
 
-//             BigInteger n = BigInteger.Parse("170141183460469231731687303715884105727"); // пример простого
+            var rsa = new RsaCipher(test, 256);
 
-//             Console.WriteLine(fermat.IsProbablePrime(n, 0.999));
-//             Console.WriteLine(ss.IsProbablePrime(n, 0.999));
-//             Console.WriteLine(mr.IsProbablePrime(n, 0.99999));
-//         }
-//     }
-// }
+            var (n, e, d) = rsa.GetKeys();
+
+            Console.WriteLine("RSA Keys:");
+            Console.WriteLine($"n = {n}");
+            Console.WriteLine($"e = {e}");
+            Console.WriteLine($"d = {d}\n");
+
+            // string text = "HELLO RSA";
+            // BigInteger msg = new BigInteger(Encoding.UTF8.GetBytes(text), true, true);
+
+            // BigInteger cipher = rsa.Encrypt(msg);
+            // Console.WriteLine($"Encrypted: {cipher}");
+
+            // BigInteger decrypted = rsa.Decrypt(cipher);
+            // string result = Encoding.UTF8.GetString(decrypted.ToByteArray(true, true));
+            // Console.WriteLine($"Decrypted: {result}\n");
+            RsaCipher.FileProcessor files = new RsaCipher.FileProcessor(rsa);
+
+            files.EncryptFile("input.txt", "encrypted.bin");
+            files.DecryptFile("encrypted.bin", "decrypted.txt");
+
+            
+        
+
+            if (WienerAttack.TryRecoverPrivateKey(e, n, out BigInteger crackedD))
+                Console.WriteLine("ВИНЕР СРАБОТАЛ! d = " + crackedD);
+            else
+                Console.WriteLine("Атака Винера НЕ применима");
+        }
+    }
+}
