@@ -16,15 +16,12 @@ namespace DesAlgoritm
             string encryptedFile = "encrypted.bin";
             string decryptedFile = "decrypted.txt";
 
-            // File.WriteAllText(inputFile,
-            //     "Hello! This is a test file.\nУРРРРРАААААААА");
-
             byte[] key = Encoding.ASCII.GetBytes("1234567887654321"); 
             byte[] iv = Encoding.ASCII.GetBytes("1234567887654321");  
 
             var cipher = new ContextCipher.ContextCipher(
                 key: key,
-                mode: CipherMode.CBC,
+                mode: CipherMode.ECB,
                 padding: PaddingMode.PKCS7,
                 algorithm: deal,
                 iv: iv);
@@ -41,8 +38,6 @@ namespace DesAlgoritm
             string text = Encoding.UTF8.GetString(data);
             Console.WriteLine(text);
 
-
-                
             // string plaintext = "ABCDEFGHABCDEFGHHHHH";
             // byte[] plainBytes = Encoding.UTF8.GetBytes(plaintext);
             // byte[] encrypted = cipher.Encrypt(plainBytes);

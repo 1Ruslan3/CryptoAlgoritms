@@ -8,13 +8,14 @@ namespace RijndaelAlgoritm
         private int Nk;  
         private int Nr;  
         private byte[][] RoundKeys; 
-          private readonly byte[] sBox = new byte[256];
+        private bool _initialized;
+        private readonly byte[] sBox = new byte[256];
         private readonly byte[] invSBox = new byte[256];
         private readonly int gfPoly;
 
         public int BlockSize => Nb * 4; 
 
-        public bool IsInitialized => throw new NotImplementedException();
+        public bool IsInitialized => _initialized;
 
         public RijndaelCipher(int blockBits = 128, int gfPolynomial = 0x139)
         {
@@ -34,10 +35,12 @@ namespace RijndaelAlgoritm
 
             GenerateSBoxes();
             RoundKeys = ExpandKey(key);
+            _initialized = true;
         }
 
         public byte[] Encrypt(byte[] block)
         {
+             if (!IsInitialized) throw new InvalidOperationException("Cipher not initialized.");
             if (block == null) throw new ArgumentNullException(nameof(block));
             if (block.Length != BlockSize) throw new ArgumentException($"Block size must be {BlockSize} bytes.");
             return EncryptBlock(block);
@@ -45,6 +48,7 @@ namespace RijndaelAlgoritm
 
         public byte[] Decrypt(byte[] block)
         {
+            if (!IsInitialized) throw new InvalidOperationException("Cipher not initialized.");
             if (block == null) throw new ArgumentNullException(nameof(block));
             if (block.Length != BlockSize) throw new ArgumentException($"Block size must be {BlockSize} bytes.");
             return DecryptBlock(block);
@@ -312,6 +316,7 @@ namespace RijndaelAlgoritm
         public void Reset()
         {
             RoundKeys = Array.Empty<byte[]>();
+            _initialized = false;
         }
     }
 }

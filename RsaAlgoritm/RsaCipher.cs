@@ -129,6 +129,7 @@ namespace RsaAlgoritm
 
                 BigInteger n = _rsa._n;
                 int blockSize = n.GetByteCount() - 1;
+                int encryptedBlockSize = n.GetByteCount(); 
 
                 using FileStream fs = new FileStream(outputPath, FileMode.Create);
                 using BinaryWriter bw = new BinaryWriter(fs);
@@ -139,14 +140,28 @@ namespace RsaAlgoritm
                     byte[] block = new byte[len];
                     Array.Copy(data, i, block, 0, len);
 
+                    if (block.Length < blockSize)
+                    {
+                        byte[] padded = new byte[blockSize];
+                        Array.Copy(block, 0, padded, blockSize - block.Length, block.Length);
+                        block = padded;
+                    }
+
                     BigInteger m = new BigInteger(block, true, true);
                     BigInteger c = _rsa.Encrypt(m);
 
                     byte[] cryptBlock = c.ToByteArray(true, true);
 
-                    bw.Write(len);                 
-                    bw.Write(cryptBlock.Length);  
-                    bw.Write(cryptBlock);        
+                    if (cryptBlock.Length < encryptedBlockSize)
+                    {
+                        byte[] temp = new byte[encryptedBlockSize];
+                        Array.Copy(cryptBlock, 0, temp, encryptedBlockSize - cryptBlock.Length, cryptBlock.Length);
+                        cryptBlock = temp;
+                    }
+
+                    bw.Write(len); 
+                    bw.Write(cryptBlock.Length); 
+                    bw.Write(cryptBlock);
                 }
             }
 
@@ -155,6 +170,9 @@ namespace RsaAlgoritm
                 using FileStream fs = new FileStream(inputPath, FileMode.Open);
                 using BinaryReader br = new BinaryReader(fs);
                 using FileStream outFs = new FileStream(outputPath, FileMode.Create);
+
+                BigInteger n = _rsa._n;
+                int blockSize = n.GetByteCount() - 1;
 
                 while (fs.Position < fs.Length)
                 {
@@ -167,23 +185,14 @@ namespace RsaAlgoritm
 
                     byte[] plainBlock = m.ToByteArray(true, true);
 
-                    if (plainBlock.Length > plainLen)
+                    if (plainBlock.Length < blockSize)
                     {
-                        byte[] fixedBlock = new byte[plainLen];
-                        Array.Copy(plainBlock, plainBlock.Length - plainLen, fixedBlock, 0, plainLen);
-                        outFs.Write(fixedBlock);
+                        byte[] temp = new byte[blockSize];
+                        Array.Copy(plainBlock, 0, temp, blockSize - plainBlock.Length, plainBlock.Length);
+                        plainBlock = temp;
                     }
-                    else if (plainBlock.Length < plainLen)
-                    {
-                        byte[] fixedBlock = new byte[plainLen];
-                        int offset = plainLen - plainBlock.Length;
-                        Array.Copy(plainBlock, 0, fixedBlock, offset, plainBlock.Length);
-                        outFs.Write(fixedBlock);
-                    }
-                    else
-                    {
-                        outFs.Write(plainBlock);
-                    }
+
+                    outFs.Write(plainBlock, blockSize - plainLen, plainLen);
                 }
             }
             #endregion
