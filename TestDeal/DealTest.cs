@@ -53,7 +53,7 @@ namespace TestDeal
 
         [Theory]
         [MemberData(nameof(GetTestCases))]
-        public void Deal_Encrypt_Decrypt_ReturnsExpected(
+        public void EncryptDecrypt(
             byte[] key,
             CipherMode mode,
             PaddingMode padding,

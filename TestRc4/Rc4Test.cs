@@ -29,7 +29,7 @@ namespace TestRc4
 
         [Theory]
         [MemberData(nameof(GetTestCases))]
-        public void RC4_Encrypt_Decrypt_ReturnsOriginal(byte[] key, byte[] plainText)
+        public void EncryptDecrypt(byte[] key, byte[] plainText)
         {
             var rc4 = new RC4Cipher(key);
           
@@ -44,7 +44,7 @@ namespace TestRc4
 
         [Theory]
         [MemberData(nameof(GetTestCases))]
-        public async Task RC4_ProcessAsync_Stream_ReturnsOriginal(byte[] key, byte[] plainText)
+        public async Task ProcessAsync(byte[] key, byte[] plainText)
         {
             var rc4 = new RC4Cipher(key);
 

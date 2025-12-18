@@ -9,9 +9,7 @@ namespace RsaAlgoritm
         {
             IPrimalityTest test = new FermatTest(20);
 
-
             var rsa = new RsaCipher(test, 256);
-
             var (n, e, d) = rsa.GetKeys();
 
             Console.WriteLine("RSA Keys:");

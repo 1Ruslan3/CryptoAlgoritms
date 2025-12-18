@@ -16,14 +16,14 @@ namespace DesAlgoritm
             string encryptedFile = "encrypted.bin";
             string decryptedFile = "decrypted.txt";
 
-            byte[] key = Encoding.ASCII.GetBytes("1234567887654321"); 
-            byte[] iv = Encoding.ASCII.GetBytes("1234567887654321");  
+            byte[] key = Encoding.ASCII.GetBytes("12345678"); 
+            byte[] iv = Encoding.ASCII.GetBytes("87654321");  
 
             var cipher = new ContextCipher.ContextCipher(
                 key: key,
                 mode: CipherMode.ECB,
-                padding: PaddingMode.PKCS7,
-                algorithm: deal,
+                padding: PaddingMode.ZeroPadding,
+                algorithm: des,
                 iv: iv);
 
             Console.WriteLine("Encrypting file...");

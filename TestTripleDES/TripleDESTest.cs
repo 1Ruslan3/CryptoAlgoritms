@@ -12,7 +12,6 @@ namespace TestTripleDES
         {
             // 2-key TripleDES (K1,K2,K1)
             Enumerable.Range(1, 16).Select(i => (byte)i).ToArray(),
-
             // 3-key TripleDES (K1,K2,K3)
             Enumerable.Range(1, 24).Select(i => (byte)i).ToArray()
         };
@@ -53,7 +52,7 @@ namespace TestTripleDES
 
         [Theory]
         [MemberData(nameof(GetTestCases))]
-        public void TripleDES_Encrypt_Decrypt_ReturnsExpected(
+        public void EncryptDecrypt(
             byte[] key,
             TripleDesMode tdesMode,
             CipherMode mode,

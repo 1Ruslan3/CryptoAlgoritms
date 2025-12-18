@@ -50,7 +50,7 @@ namespace TestDes
 
         [Theory]
         [MemberData(nameof(GetTestCases))]
-        public void Des_Encrypt_Decrypt_ReturnsExpected(
+        public void EncryptDecrypt(
             CipherMode mode,
             PaddingMode padding,
             byte[] plainText)
@@ -82,6 +82,57 @@ namespace TestDes
             }
         }
 
+        // [Theory]
+        // [MemberData(nameof(GetTestCases))]
+        // public void EncryptDecrypt_File(
+        //     CipherMode mode,
+        //     PaddingMode padding,
+        //     byte[] plainText)
+        // {
+        //     var des = new DesCipher();
+
+        //     var cipher = new ContextCipher.ContextCipher(
+        //         key: Key,
+        //         mode: mode,
+        //         padding: padding,
+        //         algorithm: des,
+        //         iv: IV);
+
+        //     string inputPath = Path.GetTempFileName();
+        //     string encryptedPath = Path.GetTempFileName();
+        //     string decryptedPath = Path.GetTempFileName();
+
+        //     try
+        //     {
+        //         File.WriteAllBytes(inputPath, plainText);
+
+        //         cipher.EncryptFile(inputPath, encryptedPath);
+
+        //         cipher.DecryptFile(encryptedPath, decryptedPath);
+
+        //         byte[] decrypted = File.ReadAllBytes(decryptedPath);
+
+        //         if (padding == PaddingMode.PKCS7)
+        //         {
+        //             Assert.True(decrypted.Length >= plainText.Length);
+
+        //             for (int i = 0; i < plainText.Length; i++)
+        //             {
+        //                 Assert.Equal(plainText[i], decrypted[i]);
+        //             }
+        //         }
+        //         else
+        //         {
+        //             Assert.Equal(plainText, decrypted);
+        //         }
+        //     }
+        //     finally
+        //     {
+        //         File.Delete(inputPath);
+        //         File.Delete(encryptedPath);
+        //         File.Delete(decryptedPath);
+        //     }
+        // }
 
         public static TheoryData<CipherMode, PaddingMode, byte[]> GetTestCases()
         {

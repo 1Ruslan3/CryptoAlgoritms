@@ -47,7 +47,7 @@ namespace TestRijndael
 
         [Theory]
         [MemberData(nameof(GetTestCases))]
-        public void Rijndael_Encrypt_Decrypt_ReturnsExpected(
+        public void EncryptDecrypt(
             byte[] key,
             byte[] iv,
             CipherMode mode,

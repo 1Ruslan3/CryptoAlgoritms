@@ -6,11 +6,8 @@ namespace DesAlgoritm
     public sealed class DesCipher : ISymmetricBlockCipher  
     {
         #region Fields
-
         private readonly FeistelNetwork _feistel;
-
         public int BlockSize => 8;
-
         #endregion
 
         #region Constructor
@@ -40,11 +37,9 @@ namespace DesAlgoritm
         };
 
             private static readonly int[] Shifts = { 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1 };
-
             #endregion
 
             #region Methods
-
             public byte[][] ExpandKey(byte[] key)
             {
                 if (key == null || key.Length != 8)
@@ -115,7 +110,6 @@ namespace DesAlgoritm
                 }
 
                 int totalDestBits = dest.Length * 8;
-
                 for (int i = 0; i < numBits; i++)
                 {
                     int srcLogical = sourceStartLogical + i;
@@ -245,7 +239,6 @@ namespace DesAlgoritm
                 else
                     data[bidx] &= (byte)~(1 << bitInByte);
             }
-
             #endregion
         }
         #endregion

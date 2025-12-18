@@ -109,6 +109,8 @@ namespace RsaAlgoritm
             }
             #endregion
         }
+
+        #region FileProcessor
         public class FileProcessor
         {
             #region Fields and Properties
@@ -123,13 +125,19 @@ namespace RsaAlgoritm
             #endregion
 
             #region Methods
+            private static int GetSafeBlockSizeBytes(BigInteger n)
+            {
+                int nBits = (int)Math.Floor(BigInteger.Log(n, 2));
+                int halfBits = nBits / 2;
+                halfBits -= halfBits % 8;
+                return halfBits / 8;
+            }
             public void EncryptFile(string inputPath, string outputPath)
             {
                 byte[] data = File.ReadAllBytes(inputPath);
 
-                BigInteger n = _rsa._n;
-                int blockSize = n.GetByteCount() - 1;
-                int encryptedBlockSize = n.GetByteCount(); 
+                BigInteger n = _rsa.GetKeys().n;
+                int blockSize = GetSafeBlockSizeBytes(n);
 
                 using FileStream fs = new FileStream(outputPath, FileMode.Create);
                 using BinaryWriter bw = new BinaryWriter(fs);
@@ -140,26 +148,12 @@ namespace RsaAlgoritm
                     byte[] block = new byte[len];
                     Array.Copy(data, i, block, 0, len);
 
-                    if (block.Length < blockSize)
-                    {
-                        byte[] padded = new byte[blockSize];
-                        Array.Copy(block, 0, padded, blockSize - block.Length, block.Length);
-                        block = padded;
-                    }
-
                     BigInteger m = new BigInteger(block, true, true);
                     BigInteger c = _rsa.Encrypt(m);
 
                     byte[] cryptBlock = c.ToByteArray(true, true);
 
-                    if (cryptBlock.Length < encryptedBlockSize)
-                    {
-                        byte[] temp = new byte[encryptedBlockSize];
-                        Array.Copy(cryptBlock, 0, temp, encryptedBlockSize - cryptBlock.Length, cryptBlock.Length);
-                        cryptBlock = temp;
-                    }
-
-                    bw.Write(len); 
+                    bw.Write(len);                
                     bw.Write(cryptBlock.Length); 
                     bw.Write(cryptBlock);
                 }
@@ -170,9 +164,6 @@ namespace RsaAlgoritm
                 using FileStream fs = new FileStream(inputPath, FileMode.Open);
                 using BinaryReader br = new BinaryReader(fs);
                 using FileStream outFs = new FileStream(outputPath, FileMode.Create);
-
-                BigInteger n = _rsa._n;
-                int blockSize = n.GetByteCount() - 1;
 
                 while (fs.Position < fs.Length)
                 {
@@ -185,18 +176,30 @@ namespace RsaAlgoritm
 
                     byte[] plainBlock = m.ToByteArray(true, true);
 
-                    if (plainBlock.Length < blockSize)
+                    if (plainBlock.Length > plainLen)
                     {
-                        byte[] temp = new byte[blockSize];
-                        Array.Copy(plainBlock, 0, temp, blockSize - plainBlock.Length, plainBlock.Length);
-                        plainBlock = temp;
+                        outFs.Write(
+                            plainBlock,
+                            plainBlock.Length - plainLen,
+                            plainLen);
                     }
-
-                    outFs.Write(plainBlock, blockSize - plainLen, plainLen);
+                    else if (plainBlock.Length < plainLen)
+                    {
+                        byte[] fixedBlock = new byte[plainLen];
+                        int offset = plainLen - plainBlock.Length;
+                        Array.Copy(plainBlock, 0, fixedBlock, offset, plainBlock.Length);
+                        outFs.Write(fixedBlock);
+                    }
+                    else
+                    {
+                        outFs.Write(plainBlock);
+                    }
                 }
             }
             #endregion
         }
+        #endregion
+        
         #endregion
 
         #region Fields and Properties
